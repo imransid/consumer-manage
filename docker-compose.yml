@@ -1,0 +1,63 @@
+# version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile
+      target: development
+    container_name: api-gateway
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "4097:4097"
+    # depends_on:
+    #   - rabbitmq
+
+  consumer:
+    build:
+      context: .
+      dockerfile: ./apps/consumer/Dockerfile
+      target: development
+    command: yarn start:dev consumer
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - consumer-db
+      # - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "4002:4002"
+
+  # rabbitmq:
+  #   image: rabbitmq:management
+  #   container_name: rabbitmq
+  #   restart: always
+  #   ports:
+  #     - "5672:5672"
+  #     - "15673:15672"
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=user
+  #     - RABBITMQ_DEFAULT_PASS=password
+  #     - RABBITMQ_NODE_PORT=5672
+
+  consumer-db:
+    container_name: consumer-db
+    image: postgres:16.0
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=consumer-db
+      - PGPORT=5434
+    volumes:
+      - consumer-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5434"
+
+volumes:
+  consumer-db-data:

@@ -1,0 +1,657 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["linux-musl-arm64-openssl-3.0.x", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x", "darwin-arm64"]
+  output        = "./generated/consumer"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("consumer_DATABASE_URI")
+}
+
+model holiday {
+  id           Int      @id @default(autoincrement())
+  name         String
+  fromDate     DateTime
+  toDate       DateTime
+  country      String
+  weekend      String
+  totalHoliday String
+  status       Boolean
+  color        String
+
+  createdBy Int?
+  createdAt DateTime  @default(now())
+  updateAt  DateTime? @default(now())
+
+  // Relation field
+  details        holidayDetails[]
+  profileDetails profileDetails[]
+}
+
+model holidayDetails {
+  id          Int      @id @default(autoincrement())
+  No          Int?
+  Date        DateTime
+  Type        String?
+  Description String?
+
+  createdBy Int?
+  createdAt DateTime  @default(now())
+  updateAt  DateTime? @default(now())
+
+  // Foreign key and relation
+  holidayId Int
+  holiday   holiday @relation(fields: [holidayId], references: [id])
+}
+
+model Leave {
+  id                 Int     @id @default(autoincrement())
+  leaveName          String
+  displayName        String
+  definition         String
+  color              String
+  leaveType          String
+  maxLeaveAllocation Int
+  status             Boolean
+
+  createdBy Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @default(now())
+}
+
+model designation {
+  id              Int    @id @default(autoincrement())
+  designationName String
+  designation     String
+
+  createdBy Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @default(now())
+}
+
+model deductionContribution {
+  id                        Int     @id @default(autoincrement())
+  title                     String
+  deductionContributionType String
+  type                      String
+  taxOptions                String
+  status                    Boolean
+
+  createdBy Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @default(now())
+}
+
+enum StatusType {
+  ACTIVE    @map("ACTIVE")
+  DE_ACTIVE @map("DE_ACTIVE")
+}
+
+enum FrequencyType {
+  EVERY_WEEK      @map("EVERY_WEEK")
+  EVERY_ONCE_WEEK @map("EVERY_ONCE_WEEK")
+  TWICE_A_MONTH   @map("TWICE_A_MONTH")
+  EVERY_MONTH     @map("EVERY_MONTH")
+}
+
+model LeaveType {
+  id          Int     @id @default(autoincrement())
+  leaveName   String?
+  displayName String?
+  definition  String?
+  color       String?
+
+  leaveTypeHourly  Int?
+  leaveTypeMaxHour Int?
+
+  maxLeaveAllocation         Int?
+  allowLeaveApplicationAfter Int?
+  maxConsecutiveLeave        Int?
+
+  maxCarryForwardedLeaves    Int?
+  expireCarryForwardedLeaves Int?
+
+  allowEncashment     Boolean? @default(false)
+  maxEncashableLeaves Int?
+  minEncashableLeaves Int?
+  earningComponents   String?
+
+  isEarnedLeaves     Boolean? @default(false)
+  earnLeaveFragrancy String?
+  allocatedOnDays    String?
+  Rounders           String?
+
+  status StatusType? @default(DE_ACTIVE)
+
+  isLeaveWithoutPay                  Boolean @default(false)
+  isOptionalLeaves                   Boolean @default(false)
+  allowNegativeBalance               Boolean @default(false)
+  allowOverAllocation                Boolean @default(false)
+  includeHolidaysWithinLeavesONLeave Boolean @default(false)
+  isCompensatory                     Boolean @default(false)
+
+  employeeLeave EmployeeLeave[] @relation("EmployeeLeave")
+
+  createdBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// model LeaveType {
+//   id          Int    @id @default(autoincrement())
+//   leaveName   String
+//   displayName String
+//   definition  String
+//   color       String
+
+//   leaveTypeHourly  Int
+//   leaveTypeMaxHour Int
+
+//   maxLeaveAllocation         Int
+//   allowLeaveApplicationAfter Int
+//   maxConsecutiveLeave        Int
+
+//   maxCarryForwardedLeaves    Int?
+//   expireCarryForwardedLeaves Int?
+
+//   allowEncashment     Boolean
+//   maxEncashableLeaves Int?
+//   minEncashableLeaves Int?
+//   earningComponents   String?
+
+//   isEarnedLeaves     Boolean
+//   earnLeaveFragrancy String?
+//   allocatedOnDays    String?
+//   Rounders           String?
+
+//   status StatusType
+
+//   isLeaveWithoutPay                  Boolean @default(false)
+//   isOptionalLeaves                   Boolean @default(false)
+//   allowNegativeBalance               Boolean @default(false)
+//   allowOverAllocation                Boolean @default(false)
+//   includeHolidaysWithinLeavesONLeave Boolean @default(false)
+//   isCompensatory                     Boolean @default(false)
+
+//   createdBy Int?
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   encashments LeaveEncashment[]
+// }
+
+enum OnboardingType {
+  EMPLOYEE_SELF_ONBOARD_WITH_1_9 @map("EMPLOYEE_SELF_ONBOARD_WITH_1_9")
+  EMPLOYEE_SELF_ONBOARD          @map("EMPLOYEE_SELF_ONBOARD")
+  ENTER_ALL_THEIR_INFO_MYSELF    @map("ENTER_ALL_THEIR_INFO_MYSELF")
+}
+
+model Profile {
+  id Int @id @default(autoincrement())
+
+  email          String         @unique
+  employeeName   String
+  middleName     String
+  lastName       String
+  hireDate       DateTime
+  designation    String
+  department     String?
+  paySchedule    String?
+  employeeType   String?
+  mobilePhone    String?
+  status         Boolean
+  onboardingType OnboardingType
+
+  companyID  String?
+  employeeID String? @unique
+
+  createdBy          Int?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  profileDetails     profileDetails?
+  // 👇 One-to-many relation
+  timeSheetProcesses TimeSheetProcess[]
+  payrolls           EmployeePayroll[] // 👈 One-to-many relation
+  timeSheet          timeSheet[]
+  employeeLeave      EmployeeLeave[]
+
+  @@index([email])
+}
+
+model Shift {
+  id Int @id @default(autoincrement())
+
+  shiftName        String
+  shiftCode        String
+  shiftDescription String
+  shiftType        String
+
+  regularHour String
+  shiftLate   String
+  shiftIn     DateTime
+  shiftOut    DateTime
+
+  lunchTime String
+  lunchIn   String
+  lunchOut  String
+
+  tiffinTime String
+  tiffinIn   String
+  tiffinOut  String
+
+  createdBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profileDetails profileDetails[]
+
+  @@index([shiftCode])
+}
+
+model LeaveEncashment {
+  id Int @id @default(autoincrement())
+
+  empId              String
+  employeeName       String
+  leavePeriod        String
+  leaveYear          String
+  currency           String
+  designation        String
+  department         String
+  leaveBalancePeriod String
+
+  encashmentDate DateTime
+
+  leaveEncasementDetails String?
+
+  createdBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PaySchedule {
+  id Int @id @default(autoincrement())
+
+  payScheduleName          String
+  payFrequency             FrequencyType
+  isDefaultForNewEmployees Boolean
+
+  companyID          String?
+  // weekly
+  nextPayDay         DateTime? //
+  endOfNextPayPeriod DateTime?
+
+  status String?
+
+  monthType String?
+
+  // month
+  firstPayPeriodOfTheMonth        DateTime?
+  paydayOfTheMonth                DateTime?
+  endOfEachMonthPayPeriodTimeLine String?
+  endOfEachMonthPayDay            String?
+  daysBeforePayday                String? /// Payday of the month - daysBeforePayday = End date
+
+  // twice month
+
+  secondPayPeriodOfTheMonth             DateTime?
+  secondPaydayOfTheMonth                DateTime?
+  secondEndOfEachMonthPayPeriodTimeLine String?
+  secondEndOfEachMonthPayDay            String?
+  secondDaysBeforePayday                String? /// Payday of the month - daysBeforePayday = End date
+
+  profileDetails profileDetails[]
+
+  createdBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model attendance {
+  id Int @id @default(autoincrement())
+
+  employeeId String
+  date       DateTime
+  checkIn    String
+  checkOut   String
+  shift      String?
+  worked     String?
+
+  status String?
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model profileDetails {
+  id Int @id @default(autoincrement())
+
+  displayName String?
+
+  series        String?
+  salutation    String?
+  firstName     String?
+  middleName    String?
+  lastName      String?
+  gender        String?
+  dateOfBirth   String?
+  ssn           String?
+  dateOfJoining String?
+  status        String?
+
+  company      String?
+  reportsTo    String?
+  department   String?
+  designation  String?
+  role         String?
+  workEmail    String?
+  WorkPhone    String?
+  employeeType String?
+
+  useCompanyAddress Boolean?
+  workAddress       String?
+  workState         String?
+  workZip           String?
+  workCity          String?
+  conformationDate  String?
+  noticeDate        String?
+  offerDate         String?
+  contractEndDate   String?
+
+  terminateDate  String?
+  lastDaysWorked String?
+  terminateType  String?
+  terminateDesc  String?
+
+  ratePerHour String?
+
+  phoneNumber           String?
+  homePhone             String?
+  personalEmail         String?
+  preferredContactEmail String?
+
+  homeAddress String?
+  homeCity    String?
+  homeState   String?
+  homeZipCode String?
+
+  mailingAddressIsTheSame Boolean?
+  mailingAddress          String?
+  mailingState            String?
+  mailingCity             String?
+  mailingZipCode          String?
+
+  emergencyContactName String?
+  emergencyRelation    String?
+  emergencyPhone       String?
+
+  paymentMethod                  String?
+  accountingNumber               String?
+  accountType                    String?
+  accountBankName                String?
+  accountConfirmAccountingNumber String?
+  accountConfirmRoutingNumber    String?
+
+  attendanceDeviceIDBiometricRFtagID String?
+
+  stateWhereTheEmployeeLives                  String?
+  maritalStatus                               String?
+  totalNumberOfAllowances_box_f               String?
+  additionalWithHolding                       String?
+  exemptFromWithHolding_section_2NotExample   String?
+  IsThisEmployeeExemptFromMyState             String?
+  enterAmount                                 Int?
+  doesTheEmployeesWorkInTheStateWhereTheLives Boolean?
+  isThisEmployeeExemptFromMyState             Boolean?
+
+  which_W_4_DoesEmployeeHave         String?
+  WithHoldingStatus                  String?
+  multipleJobsOrSpouseWorks          String?
+  claimDepends                       String?
+  deductions                         String?
+  otherIncome                        String?
+  extraWithHolding                   String?
+  exemptFromWithHolding              String?
+  isThisEmployeeExemptFromFederalTax String?
+  employeeAccessToForm_W_4           Boolean?
+
+  overTime                 Boolean?
+  payType                  String?
+  payFrequency             String?
+  salary                   String?
+  hoursPerDay              String?
+  dayForWeek               String?
+  doubleOverTimePay        Boolean?
+  holidayPay               Boolean?
+  bonus                    Boolean?
+  earning                  String[]
+  deduction_Contribution   String[]
+  garnishment              String[]
+  educationalQualification String[]
+  previousWorkExperience   String[]
+  historyInCompany         String[]
+
+  uscis_alien_regis_number String?
+  formi9                   String?
+  foreignPassportNumber    String?
+  includeSSN               Boolean?
+  citizenship              String?
+  signName                 String?
+  otherCountryName         String?
+
+  photo String?
+
+  holidayDetails holiday? @relation(fields: [holidayID], references: [id], onDelete: Cascade)
+  holidayID      Int?
+
+  payScheduleID Int?
+  paySchedule   PaySchedule? @relation(fields: [payScheduleID], references: [id], onDelete: Cascade)
+
+  profileId Int     @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  shiftId Int?
+  shift   Shift? @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  createdBy        Int?
+  createdAt        DateTime? @default(now())
+  updatedAt        DateTime? @updatedAt
+  documentationsID String[]
+}
+
+model documentation {
+  id Int @id @default(autoincrement())
+
+  documentationName String
+  documentationSize String
+  lastUpdate        String
+  uploadedBy        String
+  documentationURL  String
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model generalSettings {
+  id Int @id @default(autoincrement())
+
+  calculatePayrollWorkingDaysBasedOn           String?
+  includeHolidaysInTotalNoOfWorkingDays        Boolean?
+  maxWorkingHoursAgainstTimeSheet              String?
+  fractionOfDailySalaryForHalfDay              String?
+  disableRoundTotal                            Boolean?
+  showLeaveBalancesInSalarySlip                Boolean?
+  encryptSalarySlipsInEmails                   Boolean?
+  emailSalarySlipToEmployee                    Boolean?
+  emailTemplate                                String?
+  processPayrollAccountingEntryBasedOnEmployee Boolean?
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model taxSettings {
+  id Int @id @default(autoincrement())
+
+  generalTaxInfo   String?
+  companyLegalName String?
+  state            String?
+  city             String?
+  zipCode          String?
+  companyType      String?
+  streetAddress    String?
+  createdBy        Int?
+  createdAt        DateTime? @default(now())
+  updatedAt        DateTime? @updatedAt
+}
+
+model federalFaxInfo {
+  id Int @id @default(autoincrement())
+
+  employerIdentificationNumberEN         String?
+  whichPayrollTaxFormDoYouFileWithTheIRS String?
+  howOftenDoYouPayYourTaxes              String?
+  effectiveDate                          String?
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model californiaTaxInfo {
+  id Int @id @default(autoincrement())
+
+  eDDEmployerPayrollTaxAccountNumber String
+  howOftenDoYouPayYourTaxes          String
+  effectiveDate                      String
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model timeSheet {
+  id Int @id @default(autoincrement())
+
+  employeeId       Int
+  remarks          String?
+  startTime        DateTime? @default(now())
+  endTime          DateTime?
+  totalTime        String?
+  startProcessDate DateTime?
+  endProcessDate   DateTime?
+  status           String?
+  overtimeMinutes  Int?
+  lateMinutes      Int?
+
+  profile Profile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model TimeSheetProcess {
+  id Int @id @default(autoincrement())
+
+  employeeId String
+
+  startTime        DateTime
+  endTime          DateTime
+  status           String
+  startProcessTime DateTime
+  endProcessTIme   DateTime
+  dateType         String
+  remark           String
+  totalWorked      String
+
+  profileId Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model leaveBalance {
+  id        Int       @id @default(autoincrement())
+  title     String?
+  leaveYear DateTime?
+  fromDate  DateTime?
+  toDate    DateTime?
+
+  createdBy Int?
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
+  details       leaveBalanceDetails[] @relation("LeaveBalanceToDetails")
+  employeeLeave EmployeeLeave[]       @relation("EmployeeLeave")
+}
+
+model leaveBalanceDetails {
+  id        Int  @id @default(autoincrement())
+  createdBy Int?
+  companyId Int?
+
+  leaveBalances String // Store dynamic leave types as a JSON field
+
+  leaveBalanceId Int? // Optional foreign key
+  leaveBalance   leaveBalance? @relation("LeaveBalanceToDetails", fields: [leaveBalanceId], references: [id])
+}
+
+model EmployeePayroll {
+  id                   Int     @id @default(autoincrement())
+  employeeName         String?
+  workingconsumers     String?
+  rate                 String?
+  salary               String?
+  OT                   String?
+  doubleOT             String?
+  PTO                  String?
+  holidayPay           String?
+  bonus                String?
+  commission           String?
+  total                String?
+  grossPay             String?
+  netPay               Int?
+  employeeContribution Int?
+  employeeDeduction    Int?
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
+  // Relations
+  netPaySummary String?
+
+  companyID String?
+
+  profileId Int?
+  profile   Profile? @relation(fields: [profileId], references: [id])
+}
+
+model EmployeeLeave {
+  id             Int           @id @default(autoincrement())
+  leaveBalanceId Int?
+  leaveBalance   leaveBalance? @relation("EmployeeLeave", fields: [leaveBalanceId], references: [id])
+
+  leaveTypeId   Int?
+  leaveTypeData LeaveType? @relation("EmployeeLeave", fields: [leaveTypeId], references: [id])
+
+  leaveType String?
+  totalDays Int?
+
+  selectLeave            String?
+  deskLookByEmployeeID   Int?
+  deskLookByEmployeeName String?
+  note                   String?
+  fromDate               DateTime?
+  toDate                 DateTime?
+  status                 String?
+
+  profileId Int?
+  profile   Profile? @relation(fields: [profileId], references: [id])
+}
