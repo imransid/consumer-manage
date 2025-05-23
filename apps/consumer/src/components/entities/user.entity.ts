@@ -15,8 +15,8 @@ export class User {
   @Field({ nullable: true })
   storeAddress?: string;
 
-  @Field({ nullable: true })
-  email?: string;
+  @Field()
+  email: string;
 
   @Field({ nullable: true })
   products?: string;

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -22,28 +23,48 @@ export class UserService {
     private readonly mailService: MailerService,
   ) {}
 
+  async generateAndSendCode(user: User): Promise<void> {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store code
+    await this.prisma.verification.create({
+      data: {
+        email: user.email,
+        code,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+
+    // Send email
+    const subject = 'Complete Your Onboarding';
+    const body = `
+      <h1>Welcome, ${user.firstName}!</h1>
+      <p>Use this code to complete your onboarding:</p>
+      <h2>${code}</h2>
+    `;
+    sendMail(user.email, subject, body, this.mailService);
+  }
+
   async create(createUserInput: CreateUserInput): Promise<User> {
     try {
-      const data = {
-        ...createUserInput,
-      };
-
-      const createdUser: User = await this.prisma.user.create({
-        data,
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: createUserInput.email },
       });
 
-      if (createUserInput.role === 'CUSTOMER') {
-        const body = `
-  <h1 style="font-size: 24px; color: #333;">Welcome !</h1>
-    Complete Onboarding
-  </a>
-`;
-
-        const subject = 'role';
-        sendMail(createUserInput.email, subject, body, this.mailService);
+      if (existingUser) {
+        throw new BadRequestException('User with this email already exists.');
       }
 
-      return createdUser;
+      const user = await this.prisma.user.create({
+        data: { ...createUserInput },
+      });
+
+      if (user.role === 'CUSTOMER') {
+        await this.generateAndSendCode(user);
+      }
+
+      return user;
     } catch (error) {
       // Log error if needed here or use a logger service
       throw new InternalServerErrorException(

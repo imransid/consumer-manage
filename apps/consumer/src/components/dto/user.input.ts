@@ -34,9 +34,8 @@ export class CreateUserInput {
   @IsString()
   storeAddress: string;
 
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsEmail()
+  @Field()
+  @IsString()
   email: string;
 
   @Field({ nullable: true })
