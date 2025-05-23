@@ -12,9 +12,15 @@ import {
 import { User } from '../entities/user.entity';
 import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
 
+import { MailerService } from '@nestjs-modules/mailer';
+import { sendMail } from '../../../../../utils/email.util';
+
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaConsumerService) {}
+  constructor(
+    private readonly prisma: PrismaConsumerService,
+    private readonly mailService: MailerService,
+  ) {}
 
   async create(createUserInput: CreateUserInput): Promise<User> {
     try {
@@ -25,6 +31,17 @@ export class UserService {
       const createdUser: User = await this.prisma.user.create({
         data,
       });
+
+      if (createUserInput.role === 'CUSTOMER') {
+        const body = `
+  <h1 style="font-size: 24px; color: #333;">Welcome !</h1>
+    Complete Onboarding
+  </a>
+`;
+
+        const subject = 'role';
+        sendMail(createUserInput.email, subject, body, this.mailService);
+      }
 
       return createdUser;
     } catch (error) {
