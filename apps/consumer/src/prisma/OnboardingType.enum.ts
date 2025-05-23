@@ -34,9 +34,8 @@ registerEnumType(StatusType, {
 });
 
 export enum ROLE_TYPE {
-  SINGLE = 'single',
-  MARRIED = 'married_filing_jointly',
-  HEAD_OF_HOUSEHOLD = 'head_of_household',
+  REPRESENTATIVE = 'REPRESENTATIVE',
+  CUSTOMER = 'CUSTOMER',
 }
 
 registerEnumType(ROLE_TYPE, {

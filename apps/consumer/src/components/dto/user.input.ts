@@ -54,10 +54,10 @@ export class CreateUserInput {
   @IsString()
   photoUrl?: string;
 
-  @Field(() => ROLE_TYPE)
-  @IsNotEmpty()
-  @IsEnum(ROLE_TYPE)
-  role: ROLE_TYPE;
+  @Field(() => ROLE_TYPE, {
+    defaultValue: ROLE_TYPE.CUSTOMER,
+  })
+  role: keyof typeof ROLE_TYPE;
 }
 
 @InputType()

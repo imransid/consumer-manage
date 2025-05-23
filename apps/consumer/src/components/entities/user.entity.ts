@@ -6,33 +6,35 @@ export class User {
   @Field(() => Int)
   id: number;
 
-  @Field()
-  firstName: string;
+  @Field({ nullable: true })
+  firstName?: string;
 
-  @Field()
-  storeName: string;
+  @Field({ nullable: true })
+  storeName?: string;
 
-  @Field()
-  storeAddress: string;
+  @Field({ nullable: true })
+  storeAddress?: string;
 
-  @Field()
-  email: string;
+  @Field({ nullable: true })
+  email?: string;
 
-  @Field()
-  products: string;
+  @Field({ nullable: true })
+  products?: string;
 
-  @Field()
-  schedule: boolean;
+  @Field({ nullable: true })
+  schedule?: boolean;
 
   @Field({ nullable: true })
   photoUrl?: string;
 
-  @Field(() => ROLE_TYPE)
-  role: ROLE_TYPE;
+  @Field(() => ROLE_TYPE, {
+    defaultValue: ROLE_TYPE.CUSTOMER,
+  })
+  role: keyof typeof ROLE_TYPE;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   createdAt?: Date;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   updatedAt?: Date;
 }

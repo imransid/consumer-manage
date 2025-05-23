@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../../../prisma/prisma.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ProfileResolver } from './user/user.resolver';
-import { ProfileService } from './user/profile.service';
+import { UserResolver } from './user/user.resolver';
+import { UserService } from './user/user.service';
 import { ProfileDetailsResolver } from './profileDetails/profileDetails.resolver';
 import { ProfileDetailsService } from './profileDetails/profileDetails.service';
 import { DocumentationResolver } from './documentaion/documentation.resolver';
@@ -26,8 +26,8 @@ import { DocumentationService } from './documentaion/documentation.service';
   providers: [
     JwtService,
     ConfigService,
-    ProfileResolver,
-    ProfileService,
+    UserResolver,
+    UserService,
     ProfileDetailsResolver,
     ProfileDetailsService,
     DocumentationResolver,

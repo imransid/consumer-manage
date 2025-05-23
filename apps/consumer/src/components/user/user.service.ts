@@ -1,19 +1,38 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaConsumerService } from '../../../../../prisma/prisma-hr.service';
 import {
   CreateUserInput,
   UpdateUserInput,
   UsersPaginatedResult,
 } from '../dto/user.input';
+import { User } from '../entities/user.entity';
+import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaConsumerService) {}
 
-  async create(createUserInput: CreateUserInput) {
-    return this.prisma.user.create({
-      data: createUserInput,
-    });
+  async create(createUserInput: CreateUserInput): Promise<User> {
+    try {
+      const data = {
+        ...createUserInput,
+      };
+
+      const createdUser: User = await this.prisma.user.create({
+        data,
+      });
+
+      return createdUser;
+    } catch (error) {
+      // Log error if needed here or use a logger service
+      throw new InternalServerErrorException(
+        'Failed to create user: ' + error.message,
+      );
+    }
   }
 
   async findAll(page: number, limit: number): Promise<UsersPaginatedResult> {
@@ -61,40 +80,44 @@ export class UserService {
 
   async search(
     query: string,
-    page: number,
-    limit: number,
+    page = 1,
+    limit = 10,
   ): Promise<UsersPaginatedResult> {
+    // Ensure valid pagination values
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 10;
+
     const skip = (page - 1) * limit;
+
+    // Base filters: case-insensitive partial match on firstName and email
+    const orFilters: any[] = [
+      { firstName: { contains: query, mode: 'insensitive' } },
+      { email: { contains: query, mode: 'insensitive' } },
+    ];
+
+    // Add role filter if query exactly matches one of the ROLE_TYPE enum values
+    const upperQuery = query.toUpperCase();
+    if (Object.values(ROLE_TYPE).includes(upperQuery as ROLE_TYPE)) {
+      orFilters.push({ role: upperQuery as ROLE_TYPE });
+    }
 
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { role: { contains: query, mode: 'insensitive' } },
-          ],
-        },
+        where: { OR: orFilters },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.user.count({
-        where: {
-          OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } },
-            { role: { contains: query, mode: 'insensitive' } },
-          ],
-        },
+        where: { OR: orFilters },
       }),
     ]);
 
-    return {
+    return new UsersPaginatedResult(
       users,
-      totalCount: total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-    };
+      Math.ceil(total / limit),
+      page,
+      total,
+    );
   }
 }
