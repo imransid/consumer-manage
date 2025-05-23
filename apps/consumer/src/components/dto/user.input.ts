@@ -5,17 +5,21 @@ import {
   ObjectType,
   PartialType,
 } from '@nestjs/graphql';
-import {
-  IsNotEmpty,
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsEmail,
-  IsEnum,
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsBoolean } from 'class-validator';
 
 import { User } from '../entities/user.entity';
 import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
+
+@InputType()
+export class LoggedUserInput {
+  @Field()
+  @IsString()
+  email: string;
+
+  @Field()
+  @IsString()
+  password: string;
+}
 
 @InputType()
 export class CreateUserInput {
@@ -33,6 +37,11 @@ export class CreateUserInput {
   @IsOptional()
   @IsString()
   storeAddress: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  password: string;
 
   @Field()
   @IsString()
@@ -91,4 +100,25 @@ export class UsersPaginatedResult {
     this.currentPage = currentPage;
     this.totalCount = totalCount;
   }
+}
+
+@ObjectType()
+export class AuthResponse {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  name: string;
+
+  @Field()
+  token: string;
+
+  @Field()
+  userType: string;
+}
+
+@ObjectType()
+export class VerifyResponse {
+  @Field()
+  message: string;
 }

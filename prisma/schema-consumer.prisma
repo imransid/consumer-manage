@@ -48,6 +48,7 @@ model user {
   products     String?
   schedule     Boolean?
   photoUrl     String?
+  password     String?
 
   isVerified Boolean @default(false)
 
@@ -55,15 +56,29 @@ model user {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 
-  verifications Verification[]
+  verifications    Verification[]
+  sentMessages     Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
 }
 
 model Verification {
   id        String   @id @default(cuid())
-  user      user     @relation(fields: [userId], references: [id])
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   email     String
   code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  senderId   Int
+  receiverId Int
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   user @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver user @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 }

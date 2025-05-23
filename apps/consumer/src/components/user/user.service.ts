@@ -1,26 +1,35 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaConsumerService } from '../../../../../prisma/prisma-hr.service';
 import {
   CreateUserInput,
+  LoggedUserInput,
   UpdateUserInput,
   UsersPaginatedResult,
 } from '../dto/user.input';
 import { User } from '../entities/user.entity';
 import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
-
+import * as bcrypt from 'bcrypt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { sendMail } from '../../../../../utils/email.util';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+// import { JwtPayload } from './interfaces/jwtPayload.interface';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaConsumerService,
     private readonly mailService: MailerService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async generateAndSendCode(user: User): Promise<void> {
@@ -56,8 +65,11 @@ export class UserService {
         throw new BadRequestException('User with this email already exists.');
       }
 
+      const salt = await bcrypt.genSalt(12);
+      const hashedPassword = await bcrypt.hash(createUserInput.password, salt);
+
       const user = await this.prisma.user.create({
-        data: { ...createUserInput },
+        data: { ...createUserInput, password: hashedPassword },
       });
 
       if (user.role === 'CUSTOMER') {
@@ -71,6 +83,93 @@ export class UserService {
         'Failed to create user: ' + error.message,
       );
     }
+  }
+
+  async loggedUser(loggedUserInput: LoggedUserInput) {
+    const { email, password } = loggedUserInput;
+    const isEmailValid: User = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (!isEmailValid) {
+      throw new UnauthorizedException('Invalid username/password');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      isEmailValid.password,
+    );
+
+    if (isEmailValid.isVerified === false && isEmailValid.role === 'CUSTOMER') {
+      throw new UnauthorizedException('Email is not verified.');
+    }
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Password invalid.');
+    }
+
+    const payLoad: any = {
+      id: isEmailValid.id,
+      userType: isEmailValid.role,
+    };
+    const accessToken = await this.jwtService.sign(payLoad, {
+      secret: this.configService.get('JWT_SECRET'),
+    });
+
+    return {
+      id: isEmailValid.id,
+      name: isEmailValid.firstName,
+      token: accessToken,
+      userType: isEmailValid.role,
+    };
+  }
+
+  async verifiedUser(verifyCode: string, userId: number) {
+    // Step 1: Find the verification record for the user
+    const verification = await this.prisma.verification.findFirst({
+      where: { userId },
+      orderBy: {
+        createdAt: 'desc', // latest first
+      },
+    });
+
+    if (!verification) {
+      throw new HttpException(
+        'Verification record not found.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Step 2: Check if the provided code matches
+    if (verification.code !== verifyCode) {
+      throw new HttpException(
+        'Invalid verification code.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Step 3: Optionally check for expiry
+    if (verification.expiresAt < new Date()) {
+      throw new HttpException(
+        'Verification code has expired.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Step 4: Mark user as verified
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isVerified: true },
+    });
+
+    // Step 5: Optionally delete the verification record
+    await this.prisma.verification.delete({
+      where: { id: verification.id },
+    });
+
+    return {
+      message: 'User successfully verified.',
+    };
   }
 
   async findAll(page: number, limit: number): Promise<UsersPaginatedResult> {
@@ -110,10 +209,22 @@ export class UserService {
     });
   }
 
-  async remove(id: number) {
-    await this.findOne(id); // will throw if not found
-
-    return this.prisma.user.delete({ where: { id } });
+  async remove(id: number): Promise<User> {
+    try {
+      const isUserExist = await this.findOne(id);
+      if (isUserExist) {
+        await this.prisma.user.delete({
+          where: {
+            id,
+          },
+        });
+        return isUserExist;
+      } else {
+        throw new HttpException('User not exist', HttpStatus.BAD_REQUEST);
+      }
+    } catch (e) {
+      throw new HttpException(`Error Deleting User  : ${e}`, 500);
+    }
   }
 
   async search(

@@ -4,6 +4,9 @@ import {
   CreateUserInput,
   UpdateUserInput,
   UsersPaginatedResult,
+  LoggedUserInput,
+  AuthResponse,
+  VerifyResponse,
 } from '../dto/user.input';
 import { User } from '../entities/user.entity';
 import { NotFoundException } from '@nestjs/common';
@@ -22,6 +25,35 @@ export class UserResolver {
     } catch (error) {
       throw new GraphQLException(
         'Failed to create user: ' + error.toString(),
+        'INTERNAL_SERVER_ERROR',
+      );
+    }
+  }
+
+  @Mutation(() => AuthResponse)
+  async loggedUser(
+    @Args('loggedUserInput') loggedUserInput: LoggedUserInput,
+  ): Promise<AuthResponse> {
+    try {
+      return await this.userService.loggedUser(loggedUserInput);
+    } catch (error) {
+      throw new GraphQLException(
+        'Failed to logged User : ' + error.toString(),
+        'INTERNAL_SERVER_ERROR',
+      );
+    }
+  }
+
+  @Mutation(() => VerifyResponse)
+  async verifiedUser(
+    @Args('verifyCode') verifyCode: string,
+    @Args('userId') userId: number,
+  ): Promise<VerifyResponse> {
+    try {
+      return await this.userService.verifiedUser(verifyCode, userId);
+    } catch (error) {
+      throw new GraphQLException(
+        'Failed to verified User : ' + error.toString(),
         'INTERNAL_SERVER_ERROR',
       );
     }

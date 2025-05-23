@@ -6,6 +6,8 @@ COPY package*.json yarn.lock ./
 
 RUN yarn
 
+# RUN yarn add graphql-subscriptions
+
 COPY prisma ./prisma/
 
 COPY . .
@@ -13,6 +15,8 @@ COPY . .
 # RUN  npm rebuild bcrypt --build-from-source
 
 RUN npx prisma generate --schema=./prisma/schema-consumer.prisma
+
+
 
 RUN yarn build
 

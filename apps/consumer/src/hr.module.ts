@@ -7,10 +7,12 @@ import { ComponentsModule } from './components/components.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { PubSubModule } from './pubsub/pubsub.module';
 
 @Module({
   imports: [
     PrismaModule,
+
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

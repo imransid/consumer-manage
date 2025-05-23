@@ -4,12 +4,16 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserResolver } from './user/user.resolver';
 import { UserService } from './user/user.service';
+import { MessageResolver } from './message/message.resolver';
+import { MessageService } from './message/message.service';
+import { PubSubModule } from '../pubsub/pubsub.module';
 // import { DocumentationResolver } from './documentaion/documentation.resolver';
 // import { DocumentationService } from './documentaion/documentation.service';
 
 @Module({
   imports: [
     PrismaModule,
+    PubSubModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -26,6 +30,8 @@ import { UserService } from './user/user.service';
     ConfigService,
     UserResolver,
     UserService,
+    MessageResolver,
+    MessageService,
     // DocumentationResolver,
     // DocumentationService,
   ],

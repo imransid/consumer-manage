@@ -33,13 +33,32 @@ import { join } from 'path';
       driver: ApolloDriver,
       autoSchemaFile: 'schema.gql',
       playground: true,
+      installSubscriptionHandlers: true,
+      subscriptions: {
+        'graphql-ws': true,
+      },
+
+      context: ({ req, connection }) => {
+        if (connection) {
+          // For WebSocket subscriptions
+          return {
+            headers: connection.context?.headers || {},
+          };
+        } else if (req) {
+          // For HTTP queries/mutations
+          return {
+            headers: req.headers,
+          };
+        }
+        return {};
+      },
       //sortSchema: true,
       //typePaths: ['./**/*.graphql'],
       // definitions: {
       //   path: join(process.cwd(), '/apps/api-gateway/src/graphql.schema.ts'),
       //   outputAs: 'class',
       // },
-      context: ({ req }) => ({ headers: req.headers }),
+      // context: ({ req }) => ({ headers: req.headers }),
     }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
