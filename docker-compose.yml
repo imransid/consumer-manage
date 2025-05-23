@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./apps/api-gateway/Dockerfile
       target: development
-    container_name: api-gateway
+    container_name: consumer-api-gateway
     restart: always
     env_file:
       - .env

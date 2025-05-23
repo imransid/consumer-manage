@@ -4,10 +4,8 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserResolver } from './user/user.resolver';
 import { UserService } from './user/user.service';
-import { ProfileDetailsResolver } from './profileDetails/profileDetails.resolver';
-import { ProfileDetailsService } from './profileDetails/profileDetails.service';
-import { DocumentationResolver } from './documentaion/documentation.resolver';
-import { DocumentationService } from './documentaion/documentation.service';
+// import { DocumentationResolver } from './documentaion/documentation.resolver';
+// import { DocumentationService } from './documentaion/documentation.service';
 
 @Module({
   imports: [
@@ -28,10 +26,8 @@ import { DocumentationService } from './documentaion/documentation.service';
     ConfigService,
     UserResolver,
     UserService,
-    ProfileDetailsResolver,
-    ProfileDetailsService,
-    DocumentationResolver,
-    DocumentationService,
+    // DocumentationResolver,
+    // DocumentationService,
   ],
 })
 export class ComponentsModule {}

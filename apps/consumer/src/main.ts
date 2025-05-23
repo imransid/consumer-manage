@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { consumerModule } from './consumer.module';
+import { consumerModule } from './hr.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 

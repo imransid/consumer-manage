@@ -5,7 +5,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ApiGatewayController } from './api-gateway.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { consumerModule } from 'apps/consumer/src/consumer.module';
+import { consumerModule } from '../../consumer/src/hr.module';
 import { Upload } from '../../../scalars/upload.scalar';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';

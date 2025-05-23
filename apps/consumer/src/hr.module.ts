@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { consumerController } from './consumer.controller';
+import { consumerController } from './hr.controller';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../../../prisma/prisma.module';
