@@ -40,13 +40,13 @@ model documentation {
 }
 
 model user {
-  id           Int     @id @default(autoincrement())
-  firstName    String
-  storeName    String
-  storeAddress String
-  email        String
-  products     String
-  schedule     Boolean
+  id           Int      @id @default(autoincrement())
+  firstName    String?
+  storeName    String?
+  storeAddress String?
+  email        String?
+  products     String?
+  schedule     Boolean?
   photoUrl     String?
 
   role      ROLE_TYPE

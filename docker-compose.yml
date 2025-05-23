@@ -11,7 +11,7 @@ services:
     env_file:
       - .env
     ports:
-      - "4043:4043"
+      - '4043:4043'
     # depends_on:
     #   - rabbitmq
 
@@ -31,7 +31,7 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     ports:
-      - "4002:4002"
+      - '4102:4102'
 
   # rabbitmq:
   #   image: rabbitmq:management
@@ -53,11 +53,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=consumer-db
-      - PGPORT=5434
+      - PGPORT=5638
     volumes:
       - consumer-db-data:/var/lib/postgresql/data
     ports:
-      - "5434:5434"
+      - '5638:5638'
 
 volumes:
   consumer-db-data:

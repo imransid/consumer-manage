@@ -4,71 +4,73 @@ import {
   Int,
   ObjectType,
   PartialType,
-} from "@nestjs/graphql";
+} from '@nestjs/graphql';
 import {
   IsNotEmpty,
   IsString,
-  IsDate,
   IsOptional,
-  IsInt,
-} from "class-validator";
-import { TimeSheet } from "../entities/timesheet.entity";
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+} from 'class-validator';
+
+import { User } from '../entities/user.entity';
+import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
 
 @InputType()
-export class CreateTimeSheetInput {
-  @Field(() => Int)
-  @IsInt()
-  employeeId: number;
+export class CreateUserInput {
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  firstName?: string;
 
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  remarks?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  startTime?: Date;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  endTime?: Date;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  startProcessDate?: Date;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  endProcessDate?: Date;
+  storeName?: string;
 
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  totalTime?: string;
+  storeAddress: string;
 
-  @Field(() => String, { nullable: true })
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsEmail()
+  email: string;
+
+  @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  status?: string;
+  products: string;
 
-  @Field(() => Int, { nullable: true })
+  @Field({ nullable: true })
   @IsOptional()
-  @IsInt()
-  createdBy?: number;
+  @IsBoolean()
+  schedule: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  photoUrl?: string;
+
+  @Field(() => ROLE_TYPE)
+  @IsNotEmpty()
+  @IsEnum(ROLE_TYPE)
+  role: ROLE_TYPE;
 }
 
 @InputType()
-export class UpdateTimeSheetInput extends PartialType(CreateTimeSheetInput) {
+export class UpdateUserInput extends PartialType(CreateUserInput) {
   @Field(() => Int)
   @IsNotEmpty()
-  @IsInt()
   id: number;
 }
 
 @ObjectType()
-export class TimeSheetsPaginatedResult {
-  @Field(() => [TimeSheet], { defaultValue: [] })
-  timeSheets: TimeSheet[] = [];
+export class UsersPaginatedResult {
+  @Field(() => [User], { defaultValue: [] })
+  users: User[] = [];
 
   @Field(() => Int)
   totalPages: number;
@@ -80,12 +82,12 @@ export class TimeSheetsPaginatedResult {
   totalCount: number;
 
   constructor(
-    timeSheets: TimeSheet[],
+    users: User[],
     totalPages: number,
     currentPage: number,
-    totalCount: number
+    totalCount: number,
   ) {
-    this.timeSheets = timeSheets ?? [];
+    this.users = users ?? [];
     this.totalPages = totalPages;
     this.currentPage = currentPage;
     this.totalCount = totalCount;
