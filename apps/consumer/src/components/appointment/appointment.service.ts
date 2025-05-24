@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  Inject,
 } from '@nestjs/common';
 import { PrismaConsumerService } from '../../../../../prisma/prisma-hr.service';
 import {
@@ -11,14 +12,17 @@ import {
 } from '../dto/appointments.input';
 import { Appointment } from '../entities/appointment.entity';
 import { NotificationService } from '../notification/notification.service';
+import { PubSub } from 'graphql-subscriptions';
 
 @Injectable()
 export class AppointmentService {
   constructor(
     private readonly prisma: PrismaConsumerService,
     private readonly notificationService: NotificationService,
+    @Inject('PUB_SUB') private readonly pubSub: PubSub,
   ) {}
 
+  // private pubSub = new PubSub();
   // Create appointment
   async create(
     createAppointmentInput: CreateAppointmentInput,
@@ -29,10 +33,15 @@ export class AppointmentService {
       });
 
       // 🔔 Trigger notification after creation
-      await this.notificationService.create({
+      const createdNotification = await this.notificationService.create({
         message: `Your appointment is confirmed for ${createAppointmentInput.date.toLocaleTimeString()}`,
         type: 'Appointment',
         userId: createAppointmentInput.representativeId,
+      });
+
+      // Publish notification event
+      this.pubSub.publish('notificationAdded', {
+        notificationAdded: createdNotification,
       });
 
       return appointment;
