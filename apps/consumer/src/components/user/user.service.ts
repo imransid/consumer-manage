@@ -69,7 +69,11 @@ export class UserService {
       const hashedPassword = await bcrypt.hash(createUserInput.password, salt);
 
       const user = await this.prisma.user.create({
-        data: { ...createUserInput, password: hashedPassword },
+        data: {
+          ...createUserInput,
+          password: hashedPassword,
+          isVerified: createUserInput.role === 'CUSTOMER' ? false : true,
+        },
       });
 
       if (user.role === 'CUSTOMER') {
@@ -87,7 +91,8 @@ export class UserService {
 
   async loggedUser(loggedUserInput: LoggedUserInput) {
     const { email, password } = loggedUserInput;
-    const isEmailValid: User = await this.prisma.users.findUnique({
+
+    const isEmailValid: User = await this.prisma.user.findUnique({
       where: { email },
     });
 
@@ -228,38 +233,54 @@ export class UserService {
   }
 
   async search(
-    query: string,
-    page = 1,
-    limit = 10,
+    query?: string,
+    page?: number,
+    limit?: number,
+    role?: ROLE_TYPE,
   ): Promise<UsersPaginatedResult> {
+    const where: any = {};
+
+    // Add role filter if provided
+    if (role) {
+      where.role = role;
+    }
+
+    // Add OR filters if query is present and not blank
+    if (query && query.trim() !== '') {
+      where.OR = [
+        { firstName: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: 'insensitive' } },
+      ];
+    }
+
+    // Check if pagination should be applied
+    const isPaginated = !!page && !!limit;
+
+    if (!isPaginated) {
+      const [users, total] = await this.prisma.$transaction([
+        this.prisma.user.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.user.count({ where }),
+      ]);
+
+      return new UsersPaginatedResult(users, 1, 1, total);
+    }
+
     // Ensure valid pagination values
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
-
     const skip = (page - 1) * limit;
-
-    // Base filters: case-insensitive partial match on firstName and email
-    const orFilters: any[] = [
-      { firstName: { contains: query, mode: 'insensitive' } },
-      { email: { contains: query, mode: 'insensitive' } },
-    ];
-
-    // Add role filter if query exactly matches one of the ROLE_TYPE enum values
-    const upperQuery = query.toUpperCase();
-    if (Object.values(ROLE_TYPE).includes(upperQuery as ROLE_TYPE)) {
-      orFilters.push({ role: upperQuery as ROLE_TYPE });
-    }
 
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
-        where: { OR: orFilters },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.user.count({
-        where: { OR: orFilters },
-      }),
+      this.prisma.user.count({ where }),
     ]);
 
     return new UsersPaginatedResult(

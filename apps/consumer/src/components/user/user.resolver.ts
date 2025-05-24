@@ -11,6 +11,7 @@ import {
 import { User } from '../entities/user.entity';
 import { NotFoundException } from '@nestjs/common';
 import { GraphQLException } from 'exceptions/graphql-exception';
+import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -126,14 +127,13 @@ export class UserResolver {
 
   @Query(() => UsersPaginatedResult)
   async searchUsers(
-    @Args('query', { type: () => String }) query: string,
-    @Args('page', { type: () => Int, nullable: true, defaultValue: 1 })
-    page: number,
-    @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 })
-    limit: number,
+    @Args('query', { type: () => String, nullable: true }) query?: string,
+    @Args('page', { type: () => Int, nullable: true }) page?: number,
+    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+    @Args('role', { type: () => ROLE_TYPE, nullable: true }) role?: ROLE_TYPE,
   ): Promise<UsersPaginatedResult> {
     try {
-      return await this.userService.search(query, page, limit);
+      return await this.userService.search(query, page, limit, role);
     } catch (error) {
       throw new GraphQLException(
         'Failed to search users: ' + error.toString(),
