@@ -59,6 +59,9 @@ model user {
   verifications    Verification[]
   sentMessages     Message[]      @relation("SentMessages")
   receivedMessages Message[]      @relation("ReceivedMessages")
+
+  customerAppointments       Appointment[] @relation("CustomerAppointments")
+  representativeAppointments Appointment[] @relation("RepresentativeAppointments")
 }
 
 model Verification {
@@ -81,4 +84,47 @@ model Message {
 
   sender   user @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiver user @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Appointment scheduling
+  date      DateTime
+  startTime DateTime
+  endTime   DateTime
+
+  // Associations
+  customerId Int
+  customer   user @relation("CustomerAppointments", fields: [customerId], references: [id], onDelete: Cascade)
+
+  representativeId Int
+  representative   user @relation("RepresentativeAppointments", fields: [representativeId], references: [id], onDelete: Cascade)
+
+  // Optional notes from user
+  note String?
+
+  // Status: pending, confirmed, canceled
+  status AppointmentStatus @default(PENDING)
+
+  // Whether user sent a chat request along with appointment
+  chatRequested Boolean @default(false)
+}
+
+// Enum for appointment status
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  type      String
+  userId    Int
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

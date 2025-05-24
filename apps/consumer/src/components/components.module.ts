@@ -7,6 +7,10 @@ import { UserService } from './user/user.service';
 import { MessageResolver } from './message/message.resolver';
 import { MessageService } from './message/message.service';
 import { PubSubModule } from '../pubsub/pubsub.module';
+import { NotificationResolver } from './notification/notification.resolver';
+import { NotificationService } from './notification/notification.service';
+import { AppointmentResolver } from './appointment/appointment.resolver';
+import { AppointmentService } from './appointment/appointment.service';
 // import { DocumentationResolver } from './documentaion/documentation.resolver';
 // import { DocumentationService } from './documentaion/documentation.service';
 
@@ -32,6 +36,10 @@ import { PubSubModule } from '../pubsub/pubsub.module';
     UserService,
     MessageResolver,
     MessageService,
+    NotificationResolver,
+    NotificationService,
+    AppointmentResolver,
+    AppointmentService,
     // DocumentationResolver,
     // DocumentationService,
   ],

@@ -42,3 +42,14 @@ registerEnumType(ROLE_TYPE, {
   name: 'ROLE_TYPE', // This name will appear in GraphQL Schema
   description: 'ROLE_TYPE',
 });
+
+export enum AppointmentStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+}
+
+registerEnumType(AppointmentStatus, {
+  name: 'AppointmentStatus', // This name will appear in GraphQL Schema
+  description: 'AppointmentStatus',
+});
