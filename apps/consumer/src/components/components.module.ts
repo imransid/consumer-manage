@@ -11,6 +11,8 @@ import { NotificationResolver } from './notification/notification.resolver';
 import { NotificationService } from './notification/notification.service';
 import { AppointmentResolver } from './appointment/appointment.resolver';
 import { AppointmentService } from './appointment/appointment.service';
+import { ReviewResolver } from './review/review.resolver';
+import { ReviewService } from './review/review.service';
 // import { DocumentationResolver } from './documentaion/documentation.resolver';
 // import { DocumentationService } from './documentaion/documentation.service';
 
@@ -40,6 +42,8 @@ import { AppointmentService } from './appointment/appointment.service';
     NotificationService,
     AppointmentResolver,
     AppointmentService,
+    ReviewResolver,
+    ReviewService,
     // DocumentationResolver,
     // DocumentationService,
   ],
