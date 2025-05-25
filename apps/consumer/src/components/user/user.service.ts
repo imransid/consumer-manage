@@ -21,7 +21,6 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { sendMail } from '../../../../../utils/email.util';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-// import { JwtPayload } from './interfaces/jwtPayload.interface';
 
 @Injectable()
 export class UserService {
