@@ -60,6 +60,10 @@ export class AppointmentService {
           skip,
           take: limit,
           orderBy: { date: 'asc' },
+          include: {
+            representative: true,
+            customer: true,
+          },
         }),
         this.prisma.appointment.count(),
       ]);
