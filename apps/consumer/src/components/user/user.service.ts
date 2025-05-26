@@ -231,34 +231,118 @@ export class UserService {
     }
   }
 
+  // async search(
+  //   query?: string,
+  //   page?: number,
+  //   limit?: number,
+  //   role?: ROLE_TYPE,
+  // ): Promise<UsersPaginatedResult> {
+  //   const where: any = {};
+
+  //   // Add role filter if provided
+  //   if (role) {
+  //     where.role = role;
+  //   }
+
+  //   // Add OR filters if query is present and not blank
+  //   if (query && query.trim() !== '') {
+  //     where.OR = [
+  //       { firstName: { contains: query, mode: 'insensitive' } },
+  //       { email: { contains: query, mode: 'insensitive' } },
+  //     ];
+  //   }
+
+  //   // Check if pagination should be applied
+  //   const isPaginated = !!page && !!limit;
+
+  //   if (!isPaginated) {
+  //     const [users, total] = await this.prisma.$transaction([
+  //       this.prisma.user.findMany({
+  //         where,
+  //         orderBy: { createdAt: 'desc' },
+  //       }),
+  //       this.prisma.user.count({ where }),
+  //     ]);
+
+  //     return new UsersPaginatedResult(users, 1, 1, total);
+  //   }
+
+  //   // Ensure valid pagination values
+  //   if (page < 1) page = 1;
+  //   if (limit < 1) limit = 10;
+  //   const skip = (page - 1) * limit;
+
+  //   const [users, total] = await this.prisma.$transaction([
+  //     this.prisma.user.findMany({
+  //       where,
+  //       skip,
+  //       take: limit,
+  //       orderBy: { createdAt: 'desc' },
+  //     }),
+  //     this.prisma.user.count({ where }),
+  //   ]);
+
+  //   return new UsersPaginatedResult(
+  //     users,
+  //     Math.ceil(total / limit),
+  //     page,
+  //     total,
+  //   );
+  // }
+
   async search(
     query?: string,
     page?: number,
     limit?: number,
     role?: ROLE_TYPE,
+    location?: string,
+    product?: string,
+    minReviewCount?: number,
+    maxReviewCount?: number,
+    minRating?: number,
   ): Promise<UsersPaginatedResult> {
     const where: any = {};
 
-    // Add role filter if provided
-    if (role) {
-      where.role = role;
-    }
+    if (role) where.role = role;
 
-    // Add OR filters if query is present and not blank
-    if (query && query.trim() !== '') {
+    if (query?.trim()) {
       where.OR = [
         { firstName: { contains: query, mode: 'insensitive' } },
         { email: { contains: query, mode: 'insensitive' } },
+        { storeName: { contains: query, mode: 'insensitive' } },
       ];
     }
 
-    // Check if pagination should be applied
-    const isPaginated = !!page && !!limit;
+    if (location?.trim()) {
+      where.storeAddress = { contains: location, mode: 'insensitive' };
+    }
 
+    if (product?.trim()) {
+      where.products = { contains: product, mode: 'insensitive' };
+    }
+
+    if (
+      minReviewCount !== undefined ||
+      maxReviewCount !== undefined ||
+      minRating !== undefined
+    ) {
+      where.reviewsReceived = {
+        some: {
+          ...(minRating && {
+            rating: { gte: minRating },
+          }),
+        },
+      };
+    }
+
+    const isPaginated = !!page && !!limit;
     if (!isPaginated) {
       const [users, total] = await this.prisma.$transaction([
         this.prisma.user.findMany({
           where,
+          include: {
+            reviewsReceived: true,
+          },
           orderBy: { createdAt: 'desc' },
         }),
         this.prisma.user.count({ where }),
@@ -267,7 +351,6 @@ export class UserService {
       return new UsersPaginatedResult(users, 1, 1, total);
     }
 
-    // Ensure valid pagination values
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
     const skip = (page - 1) * limit;
@@ -277,6 +360,9 @@ export class UserService {
         where,
         skip,
         take: limit,
+        include: {
+          reviewsReceived: true,
+        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.user.count({ where }),

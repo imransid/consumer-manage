@@ -131,9 +131,27 @@ export class UserResolver {
     @Args('page', { type: () => Int, nullable: true }) page?: number,
     @Args('limit', { type: () => Int, nullable: true }) limit?: number,
     @Args('role', { type: () => ROLE_TYPE, nullable: true }) role?: ROLE_TYPE,
+    @Args('location', { type: () => String, nullable: true }) location?: string,
+    @Args('product', { type: () => String, nullable: true }) product?: string,
+    @Args('minReviewCount', { type: () => Int, nullable: true })
+    minReviewCount?: number,
+    @Args('maxReviewCount', { type: () => Int, nullable: true })
+    maxReviewCount?: number,
+    @Args('minRating', { type: () => Int, nullable: true })
+    minRating?: number,
   ): Promise<UsersPaginatedResult> {
     try {
-      return await this.userService.search(query, page, limit, role);
+      return await this.userService.search(
+        query,
+        page,
+        limit,
+        role,
+        location,
+        product,
+        minReviewCount,
+        maxReviewCount,
+        minRating,
+      );
     } catch (error) {
       throw new GraphQLException(
         'Failed to search users: ' + error.toString(),
