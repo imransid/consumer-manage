@@ -13,6 +13,8 @@ import { AppointmentResolver } from './appointment/appointment.resolver';
 import { AppointmentService } from './appointment/appointment.service';
 import { ReviewResolver } from './review/review.resolver';
 import { ReviewService } from './review/review.service';
+import { ForgetPasswordResolver } from './forgetPassword/forgetPassword.resolver';
+import { ForgotPasswordService } from './forgetPassword/forgetPassword.service';
 // import { DocumentationResolver } from './documentaion/documentation.resolver';
 // import { DocumentationService } from './documentaion/documentation.service';
 
@@ -44,6 +46,8 @@ import { ReviewService } from './review/review.service';
     AppointmentService,
     ReviewResolver,
     ReviewService,
+    ForgetPasswordResolver,
+    ForgotPasswordService,
     // DocumentationResolver,
     // DocumentationService,
   ],
