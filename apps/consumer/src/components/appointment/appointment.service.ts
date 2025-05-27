@@ -13,6 +13,7 @@ import {
 import { Appointment } from '../entities/appointment.entity';
 import { NotificationService } from '../notification/notification.service';
 import { PubSub } from 'graphql-subscriptions';
+import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
 
 @Injectable()
 export class AppointmentService {
@@ -52,20 +53,35 @@ export class AppointmentService {
     }
   }
 
-  async findAll(page = 1, limit = 10): Promise<AppointmentPaginatedResult> {
+  async findAll(
+    page = 1,
+    limit = 10,
+    userId?: number,
+    role?: ROLE_TYPE,
+  ): Promise<AppointmentPaginatedResult> {
     try {
       const skip = (page - 1) * limit;
+
+      // Build `where` condition based on userId and role
+      let where: any = {};
+      if (userId && role === ROLE_TYPE.CUSTOMER) {
+        where.customerId = userId;
+      } else if (userId && role === ROLE_TYPE.REPRESENTATIVE) {
+        where.representativeId = userId;
+      }
+
       const [appointments, totalCount] = await this.prisma.$transaction([
         this.prisma.appointment.findMany({
           skip,
           take: limit,
           orderBy: { date: 'asc' },
+          where,
           include: {
             representative: true,
             customer: true,
           },
         }),
-        this.prisma.appointment.count(),
+        this.prisma.appointment.count({ where }),
       ]);
 
       const totalPages = Math.ceil(totalCount / limit);
@@ -82,6 +98,44 @@ export class AppointmentService {
       );
     }
   }
+
+  // async findAll(
+  //   page = 1,
+  //   limit = 10,
+  //   userId: number,
+  // ): Promise<AppointmentPaginatedResult> {
+  //   try {
+  //     const skip = (page - 1) * limit;
+  //     const [appointments, totalCount] = await this.prisma.$transaction([
+  //       this.prisma.appointment.findMany({
+  //         skip,
+  //         take: limit,
+  //         orderBy: { date: 'asc' },
+  //         include: {
+  //           representative: true,
+  //           customer: true,
+  //         },
+  //         where : {
+  //           customerId
+  //         }
+  //       }),
+  //       this.prisma.appointment.count(),
+  //     ]);
+
+  //     const totalPages = Math.ceil(totalCount / limit);
+
+  //     return {
+  //       appointments,
+  //       totalCount,
+  //       totalPages,
+  //       currentPage: page,
+  //     };
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       'Failed to fetch appointments: ' + error.message,
+  //     );
+  //   }
+  // }
   // Find one by id
   async findOne(id: number): Promise<Appointment> {
     try {

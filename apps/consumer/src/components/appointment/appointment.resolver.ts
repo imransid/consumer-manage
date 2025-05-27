@@ -8,6 +8,7 @@ import {
 import { Appointment } from '../entities/appointment.entity';
 import { NotFoundException } from '@nestjs/common';
 import { GraphQLException } from 'exceptions/graphql-exception';
+import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
 
 @Resolver(() => Appointment)
 export class AppointmentResolver {
@@ -34,9 +35,11 @@ export class AppointmentResolver {
     page: number,
     @Args('limit', { type: () => Int, nullable: true, defaultValue: 10 })
     limit: number,
+    @Args('userId', { type: () => Int, nullable: true }) userId?: number,
+    @Args('role', { type: () => ROLE_TYPE, nullable: true }) role?: ROLE_TYPE,
   ): Promise<AppointmentPaginatedResult> {
     try {
-      return await this.appointmentService.findAll(page, limit);
+      return await this.appointmentService.findAll(page, limit, userId, role);
     } catch (error) {
       throw new GraphQLException(
         'Failed to fetch appointments: ' + error.toString(),
