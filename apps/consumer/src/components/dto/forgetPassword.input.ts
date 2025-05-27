@@ -6,4 +6,8 @@ export class ForgotPasswordInput {
   @Field()
   @IsEmail()
   email: string;
+
+  @Field()
+  @IsEmail()
+  callBackUrl: string;
 }

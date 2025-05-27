@@ -19,47 +19,37 @@ export class ForgotPasswordService {
     private readonly mailService: MailerService,
   ) {}
 
-  async generateAndSendCode(user: User) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Store code
-    await this.prisma.verification.create({
-      data: {
-        email: user.email,
-        code,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
-    });
-
-    // Send email
-
-    const subject = 'Reset Your Password Code';
+  async generateAndSendResetLink(user: User, callBackUrl: string) {
+    const subject = 'Reset Your Password';
     const body = `
-  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #f4f4f4; border-radius: 8px;">
-    <h2 style="color: #333;">Hello, ${user.firstName}!</h2>
-    <p style="font-size: 16px; color: #555;">
-      We received a request to reset your password. Use the verification code below to complete the process:
-    </p>
-    <div style="text-align: center; margin: 30px 0;">
-      <div style="display: inline-block; padding: 15px 30px; background-color: #007bff; color: white; font-size: 24px; font-weight: bold; border-radius: 6px; letter-spacing: 3px;">
-        ${code}
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #f4f4f4; border-radius: 8px;">
+      <h2 style="color: #333;">Hello, ${user.firstName}!</h2>
+      <p style="font-size: 16px; color: #555;">
+        We received a request to reset your password. Click the button below to change your password.
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${callBackUrl}" style="background-color: #007bff; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-size: 16px;">
+          Change Password
+        </a>
       </div>
+      <p style="font-size: 14px; color: #777;">
+        If you didn’t request this, you can safely ignore this email.
+      </p>
     </div>
-    <p style="font-size: 14px; color: #777;">
-      This code will expire in 15 minutes. If you didn’t request a password reset, you can ignore this email.
-    </p>
-  </div>
-`;
+  `;
 
-    sendMail(user.email, subject, body, this.mailService);
-
-    return {
-      message: 'email send successfully.',
-    };
+    try {
+      await sendMail(user.email, subject, body, this.mailService);
+      return {
+        message: 'Password reset email sent successfully.',
+      };
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      throw new Error('Failed to send password reset email.');
+    }
   }
 
-  async requestPasswordReset(email: string) {
+  async requestPasswordReset(email: string, callBackUrl: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -67,7 +57,7 @@ export class ForgotPasswordService {
     }
 
     try {
-      return this.generateAndSendCode(user);
+      return this.generateAndSendResetLink(user, callBackUrl);
     } catch (error) {
       throw new InternalServerErrorException(
         'Failed to create reset token or send email',

@@ -11,7 +11,7 @@ export class ForgetPasswordResolver {
   async forgotPassword(
     @Args('input') input: ForgotPasswordInput,
   ): Promise<ForgetPassword> {
-    return await this.forgotPasswordService.requestPasswordReset(input.email);
+    return await this.forgotPasswordService.requestPasswordReset(input.email, input.callBackUrl);
   }
 
   @Mutation(() => ForgetPassword)
