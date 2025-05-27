@@ -1,6 +1,6 @@
 // notification.resolver.ts
 
-import { Inject, UseGuards } from '@nestjs/common';
+import { Inject, NotFoundException, UseGuards } from '@nestjs/common';
 import { Resolver, Query, Mutation, Subscription, Args } from '@nestjs/graphql';
 import { PubSub } from 'graphql-subscriptions';
 import { Notification } from '../entities/notification.entity';
@@ -30,6 +30,26 @@ export class NotificationResolver {
     await this.pubSub.publish(NOTIFICATION_ADDED_EVENT, {
       notificationAdded: notification,
     });
+
+    return notification;
+  }
+
+  // ✅ Query to get notifications for a user
+  @Query(() => [Notification])
+  async notifications(
+    @Args('user_id') userId: number,
+  ): Promise<Notification[]> {
+    return this.notificationService.findAllByUser(userId);
+  }
+
+  // ✅ Mutation: Mark a specific notification as read
+  @Mutation(() => Notification)
+  async markAsRead(@Args('id') id: number): Promise<Notification> {
+    const notification = await this.notificationService.markAsRead(id);
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
 
     return notification;
   }

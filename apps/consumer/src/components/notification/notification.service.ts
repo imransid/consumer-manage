@@ -18,6 +18,7 @@ export class NotificationService {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
+    
   }
 
   async markAsRead(id: number): Promise<Notification> {
