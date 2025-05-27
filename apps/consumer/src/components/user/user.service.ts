@@ -322,9 +322,9 @@ export class UserService {
     }
 
     if (
-      minReviewCount !== undefined ||
-      maxReviewCount !== undefined ||
-      minRating !== undefined
+      (minReviewCount !== undefined && minReviewCount !== null) ||
+      (maxReviewCount !== null && maxReviewCount !== undefined) ||
+      (minRating !== null && minRating !== undefined)
     ) {
       where.reviewsReceived = {
         some: {
