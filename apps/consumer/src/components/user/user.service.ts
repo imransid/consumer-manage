@@ -338,6 +338,12 @@ export class UserService {
 
     const totalChats = chatPartnerIds.size;
 
+    // 🟢 Await both async calls
+    const [performanceOverview, analytics] = await Promise.all([
+      this.getPerformanceOverview(userId),
+      this.getAnalytics(userId, 'week'),
+    ]);
+
     const userWithActivity: User = {
       ...user,
       activity: [
@@ -345,8 +351,10 @@ export class UserService {
           appointments: appointment.length,
           rating: totalRating._sum.rating ?? 0,
           chats: totalChats,
-          performanceOverview: this.getPerformanceOverview(user.id),
-          analytics: this.getAnalytics(user.id, 'week'),
+          performanceOverview,
+          analytics,
+          // performanceOverview: this.getPerformanceOverview(user.id),
+          // analytics: this.getAnalytics(user.id, 'week'),
         },
       ],
     };
