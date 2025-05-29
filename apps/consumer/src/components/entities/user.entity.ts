@@ -1,5 +1,6 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
+import { GraphQLJSON } from 'graphql-type-json';
 
 @ObjectType()
 export class User {
@@ -43,4 +44,7 @@ export class User {
 
   @Field(() => Date, { nullable: true })
   updatedAt?: Date;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  activity?: any;
 }

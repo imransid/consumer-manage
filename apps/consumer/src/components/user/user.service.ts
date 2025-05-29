@@ -196,12 +196,162 @@ export class UserService {
     };
   }
 
-  async findOne(id: number) {
+  async getPerformanceOverview(userId: number) {
+    // Appointments Completed (Confirmed only)
+    const totalAppointments = await this.prisma.appointment.count({
+      where: {
+        representativeId: userId,
+        status: 'CONFIRMED',
+      },
+    });
+
+    // Average response time (difference between appointment creation and confirmation)
+    const avgResponse = await this.prisma.$queryRaw<
+      Array<{ avg_minutes: number }>
+    >`
+    SELECT AVG(EXTRACT(EPOCH FROM (a."startTime" - a."createdAt")) / 60) as avg_minutes
+    FROM "Appointment" a
+    WHERE a."representativeId" = ${userId} AND a."status" = 'CONFIRMED'
+  `;
+
+    const averageResponseTime = Math.round(avgResponse?.[0]?.avg_minutes || 0);
+
+    // Engagement score — you can define this yourself. Example: based on rating or chat volume
+    const totalRating = await this.prisma.review.aggregate({
+      where: { targetId: userId },
+      _sum: { rating: true },
+    });
+
+    const engagementScore = Math.min(
+      Math.round((totalRating._sum.rating ?? 0) * 2),
+      100,
+    ); // capped at 100
+
+    // Compare vs last month
+    const now = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(now.getMonth() - 1);
+
+    const thisMonthCount = await this.prisma.appointment.count({
+      where: {
+        representativeId: userId,
+        status: 'CONFIRMED',
+        createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
+      },
+    });
+
+    const lastMonthCount = await this.prisma.appointment.count({
+      where: {
+        representativeId: userId,
+        status: 'CONFIRMED',
+        createdAt: {
+          gte: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1),
+          lt: new Date(now.getFullYear(), now.getMonth(), 1),
+        },
+      },
+    });
+
+    const growthRate = lastMonthCount
+      ? ((thisMonthCount - lastMonthCount) / lastMonthCount) * 100
+      : 100;
+
+    return {
+      appointmentsCompleted: totalAppointments,
+      averageResponseTime: `${averageResponseTime} min`,
+      engagementScore: `${engagementScore}%`,
+      growthRate: `${growthRate >= 0 ? '+' : ''}${Math.round(growthRate)}%`,
+    };
+  }
+
+  async getAnalytics(userId: number, range: 'week' | 'month') {
+    const today = new Date();
+    const from = new Date(today);
+    if (range === 'week') from.setDate(today.getDate() - 7);
+    else from.setMonth(today.getMonth() - 1);
+
+    // Appointments grouped by day
+    const appointments = await this.prisma.$queryRaw<
+      Array<{ day: string; count: number }>
+    >`
+    SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as day, COUNT(*) as count
+    FROM "Appointment"
+    WHERE "representativeId" = ${userId} AND "createdAt" >= ${from}
+    GROUP BY day ORDER BY day ASC
+  `;
+
+    // Chats grouped by day
+    const messages = await this.prisma.$queryRaw<
+      Array<{ day: string; count: number }>
+    >`
+    SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as day, COUNT(*) as count
+    FROM "Message"
+    WHERE "senderId" = ${userId} AND "createdAt" >= ${from}
+    GROUP BY day ORDER BY day ASC
+  `;
+
+    return {
+      appointments,
+      chats: messages,
+    };
+  }
+
+  async findOne(id: number): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-    return user;
+
+    const appointment = await this.prisma.appointment.findMany({
+      where: {
+        representativeId: user.id,
+      },
+    });
+
+    const totalRating = await this.prisma.review.aggregate({
+      where: {
+        targetId: user.id,
+      },
+      _sum: {
+        rating: true,
+      },
+    });
+
+    const userId = user.id;
+
+    // Get distinct chat partner IDs
+    const sentTo = await this.prisma.message.findMany({
+      where: { senderId: userId },
+      select: { receiverId: true },
+      distinct: ['receiverId'],
+    });
+
+    const receivedFrom = await this.prisma.message.findMany({
+      where: { receiverId: userId },
+      select: { senderId: true },
+      distinct: ['senderId'],
+    });
+
+    const chatPartnerIds = new Set<number>();
+
+    sentTo.forEach((msg) => chatPartnerIds.add(msg.receiverId));
+    receivedFrom.forEach((msg) => chatPartnerIds.add(msg.senderId));
+
+    const totalChats = chatPartnerIds.size;
+
+    const userWithActivity: User = {
+      ...user,
+      activity: [
+        {
+          appointments: appointment.length,
+          rating: totalRating._sum.rating ?? 0,
+          chats: totalChats,
+          performanceOverview: this.getPerformanceOverview(user.id),
+          analytics: this.getAnalytics(user.id, 'week'),
+        },
+      ],
+    };
+
+    return userWithActivity;
   }
 
   async update(id: number, updateUserInput: UpdateUserInput) {
