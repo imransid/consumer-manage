@@ -47,4 +47,18 @@ export class User {
 
   @Field(() => GraphQLJSON, { nullable: true })
   activity?: any;
+
+  @Field({ nullable: true })
+  jobTitle?: string;
+
+  @Field({ nullable: true })
+  isOnline?: boolean;
+
+  @Field(() => Date, { nullable: true })
+  onlineFrom?: Date;
+
+  @Field(() => Date, { nullable: true })
+  onlineTo?: Date;
+
+
 }

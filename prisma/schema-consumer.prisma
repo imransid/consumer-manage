@@ -56,6 +56,11 @@ model user {
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
 
+  isOnline   Boolean?
+  jobTitle   String?
+  onlineFrom DateTime?
+  onlineTo   DateTime?
+
   verifications    Verification[]
   sentMessages     Message[]      @relation("SentMessages")
   receivedMessages Message[]      @relation("ReceivedMessages")

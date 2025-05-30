@@ -5,7 +5,13 @@ import {
   ObjectType,
   PartialType,
 } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsDate,
+} from 'class-validator';
 
 import { User } from '../entities/user.entity';
 import { ROLE_TYPE } from '../../prisma/OnboardingType.enum';
@@ -61,6 +67,26 @@ export class CreateUserInput {
   @IsOptional()
   @IsString()
   photoUrl?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isOnline?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  jobTitle?: string;
+
+  @Field({ nullable: true })
+  @IsNotEmpty()
+  @IsDate()
+  onlineFrom?: Date;
+
+  @Field({ nullable: true })
+  @IsNotEmpty()
+  @IsDate()
+  onlineTo?: Date;
 
   @Field(() => ROLE_TYPE, {
     defaultValue: ROLE_TYPE.CUSTOMER,

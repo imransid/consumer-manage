@@ -290,8 +290,14 @@ export class UserService {
   `;
 
     return {
-      appointments,
-      chats: messages,
+      appointments: appointments.map((item) => ({
+        ...item,
+        count: Number(item.count),
+      })),
+      chats: messages.map((item) => ({
+        ...item,
+        count: Number(item.count),
+      })),
     };
   }
 
@@ -338,11 +344,8 @@ export class UserService {
 
     const totalChats = chatPartnerIds.size;
 
-    // 🟢 Await both async calls
-    const [performanceOverview, analytics] = await Promise.all([
-      this.getPerformanceOverview(userId),
-      this.getAnalytics(userId, 'week'),
-    ]);
+    const performanceOverview = await this.getPerformanceOverview(user.id);
+    const analytics = await this.getAnalytics(user.id, 'month');
 
     const userWithActivity: User = {
       ...user,
@@ -351,10 +354,8 @@ export class UserService {
           appointments: appointment.length,
           rating: totalRating._sum.rating ?? 0,
           chats: totalChats,
-          performanceOverview,
-          analytics,
-          // performanceOverview: this.getPerformanceOverview(user.id),
-          // analytics: this.getAnalytics(user.id, 'week'),
+          performanceOverview: performanceOverview,
+          analytics: analytics,
         },
       ],
     };
