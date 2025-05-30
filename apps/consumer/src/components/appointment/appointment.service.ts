@@ -141,6 +141,10 @@ export class AppointmentService {
     try {
       const appointment = await this.prisma.appointment.findUnique({
         where: { id },
+        include: {
+          customer: true,
+          representative: true,
+        },
       });
       if (!appointment) {
         throw new NotFoundException(`Appointment with ID ${id} not found`);
